@@ -1,0 +1,1 @@
+$(cat /tmp/additional_output_full.txt)
