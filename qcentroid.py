@@ -1,3 +1,15 @@
+"""
+QCentroid Quantum-Inspired Solver for Dynamic Production Scheduling (Job Shop Scheduling Problem)
+Uses QUBO (Quadratic Unconstrained Binary Optimization) + Simulated Quantum Annealing (SQA)
+
+Algorithm:
+1. Parse actual dataset structure (jobs with required_operations, processing_times, setup_matrix)
+2. Build per-machine QUBO sub-problems for job sequencing
+3. Apply Simulated Quantum Annealing using Suzuki-Trotter decomposition
+4. Decode solutions and build schedule respecting maintenance windows
+5. Return comprehensive metrics matching classical solver output format
+"""
+
 import logging
 import time
 import math
