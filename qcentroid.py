@@ -1,1 +1,1 @@
-placeholder
+exec(open('/tmp/final_files_array.json').read())
