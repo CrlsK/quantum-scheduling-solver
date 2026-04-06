@@ -21,6 +21,15 @@ def _safe_get(obj, key, default=None):
     return default
 
 
+# Unicode characters used in f-string expressions — must be pre-assigned to
+# variables because Python < 3.12 forbids backslashes inside f-string {}.
+# When this file is pushed via JSON-based APIs, unicode chars get serialised
+# as \uXXXX escapes.  Keeping them in plain assignments (not inside {})
+# lets the interpreter decode them normally.
+_SPECIALTY_YES = "\u26a1 Yes"
+_EMDASH = "\u2014"
+
+
 def generate_additional_output(input_data: dict, result: dict, algorithm_name: str = "Solver"):
     """
     Main entry point. Call from run() after computing the result dict.
@@ -221,7 +230,7 @@ def _generate_input_overview_html(input_data: dict) -> str:
       <div class="card">
         <h3>Material Grades</h3>
         <table><tr><th>Grade</th><th>Jobs</th><th>Specialty</th></tr>
-        {''.join(f'<tr><td>{g}</td><td>{c}</td><td>{"\u26a1 Yes" if g.lower() in ["duplex_2205","904l"] else "\u2014"}</td></tr>' for g,c in sorted(grade_counts.items()))}
+        {''.join(f'<tr><td>{g}</td><td>{c}</td><td>{_SPECIALTY_YES if g.lower() in ["duplex_2205","904l"] else _EMDASH}</td></tr>' for g,c in sorted(grade_counts.items()))}
         </table>
       </div>
       <div class="card">
@@ -235,7 +244,7 @@ def _generate_input_overview_html(input_data: dict) -> str:
     """
 
     return _html_wrapper(
-        f"Input Overview \u2014 {plant}",
+        f"Input Overview — {plant}",
         f"{scenario} | {len(jobs)} jobs, {len(machines)} machines, {h_end}{h_unit} horizon",
         body
     )
@@ -291,7 +300,7 @@ def _generate_problem_structure_html(input_data: dict) -> str:
     </div>
     """
 
-    return _html_wrapper("Problem Structure", f"{len(jobs)} jobs \u00d7 {len(machines)} machines", body)
+    return _html_wrapper("Problem Structure", f"{len(jobs)} jobs × {len(machines)} machines", body)
 
 
 # ============================================================================
@@ -375,7 +384,7 @@ def _generate_executive_dashboard_html(result: dict, input_data: dict, algorithm
     </div>
     """
 
-    return _html_wrapper(f"Executive Dashboard \u2014 {plant}", f"{algorithm} | {jobs_on+jobs_late} jobs scheduled", body)
+    return _html_wrapper(f"Executive Dashboard — {plant}", f"{algorithm} | {jobs_on+jobs_late} jobs scheduled", body)
 
 
 def _generate_gantt_html(result: dict, input_data: dict) -> str:
@@ -581,26 +590,26 @@ def _generate_financial_impact_html(result: dict, input_data: dict) -> str:
 
     body = f"""
     <div class="grid grid-3">
-      {_kpi_card(f"\u20b9{sla.get('net_sla_savings_inr',0):,.0f}", "Net SLA Savings")}
-      {_kpi_card(f"\u20b9{energy_econ.get('total_energy_cost_inr',0):,.0f}", "Energy Cost")}
-      {_kpi_card(f"\u20b9{prod_econ.get('estimated_cost_per_kg_inr',0):.1f}/kg", "Cost per kg")}
+      {_kpi_card(f"₹{sla.get('net_sla_savings_inr',0):,.0f}", "Net SLA Savings")}
+      {_kpi_card(f"₹{energy_econ.get('total_energy_cost_inr',0):,.0f}", "Energy Cost")}
+      {_kpi_card(f"₹{prod_econ.get('estimated_cost_per_kg_inr',0):.1f}/kg", "Cost per kg")}
     </div>
     <div class="grid grid-2">
       <div class="card">
         <h3>SLA Compliance</h3>
         <table>
-          <tr><td>Penalty Avoided</td><td style="text-align:right;color:#4ade80">\u20b9{sla.get('total_penalty_avoided_inr',0):,.0f}</td></tr>
-          <tr><td>Penalty Incurred</td><td style="text-align:right;color:#f87171">\u20b9{sla.get('total_penalty_incurred_inr',0):,.0f}</td></tr>
-          <tr><td><strong>Net Savings</strong></td><td style="text-align:right"><strong>\u20b9{sla.get('net_sla_savings_inr',0):,.0f}</strong></td></tr>
+          <tr><td>Penalty Avoided</td><td style="text-align:right;color:#4ade80">₹{sla.get('total_penalty_avoided_inr',0):,.0f}</td></tr>
+          <tr><td>Penalty Incurred</td><td style="text-align:right;color:#f87171">₹{sla.get('total_penalty_incurred_inr',0):,.0f}</td></tr>
+          <tr><td><strong>Net Savings</strong></td><td style="text-align:right"><strong>₹{sla.get('net_sla_savings_inr',0):,.0f}</strong></td></tr>
         </table>
       </div>
       <div class="card">
         <h3>Energy Economics</h3>
         <table>
           <tr><td>Total Energy</td><td style="text-align:right">{energy_econ.get('total_energy_kwh',0):,.1f} kWh</td></tr>
-          <tr><td>Peak Cost</td><td style="text-align:right">\u20b9{energy_econ.get('peak_energy_cost_inr',0):,.0f}</td></tr>
-          <tr><td>Off-Peak Cost</td><td style="text-align:right">\u20b9{energy_econ.get('off_peak_energy_cost_inr',0):,.0f}</td></tr>
-          <tr><td>Cost/kg</td><td style="text-align:right">\u20b9{energy_econ.get('energy_cost_per_kg_inr',0):.2f}</td></tr>
+          <tr><td>Peak Cost</td><td style="text-align:right">₹{energy_econ.get('peak_energy_cost_inr',0):,.0f}</td></tr>
+          <tr><td>Off-Peak Cost</td><td style="text-align:right">₹{energy_econ.get('off_peak_energy_cost_inr',0):,.0f}</td></tr>
+          <tr><td>Cost/kg</td><td style="text-align:right">₹{energy_econ.get('energy_cost_per_kg_inr',0):.2f}</td></tr>
         </table>
       </div>
     </div>
@@ -630,9 +639,9 @@ def _generate_energy_report_html(result: dict, input_data: dict) -> str:
     body = f"""
     <div class="grid grid-4">
       {_kpi_card(f"{ep.get('total_consumption_kwh',0):,.0f}", "kWh Total")}
-      {_kpi_card(f"{cf.get('estimated_co2_emissions_kg',0):,.0f}", "kg CO\u2082")}
-      {_kpi_card(f"{cf.get('co2_per_kg_product',0):.3f}", "kg CO\u2082/kg product")}
-      {_kpi_card(f"\u20b9{ep.get('peak_avoidance_savings_inr',0):,.0f}", "Peak Savings Potential")}
+      {_kpi_card(f"{cf.get('estimated_co2_emissions_kg',0):,.0f}", "kg CO2")}
+      {_kpi_card(f"{cf.get('co2_per_kg_product',0):.3f}", "kg CO2/kg product")}
+      {_kpi_card(f"₹{ep.get('peak_avoidance_savings_inr',0):,.0f}", "Peak Savings Potential")}
     </div>
     <div style="text-align:center;margin:16px 0">{comp_badge}</div>
     <div class="grid grid-2">
@@ -646,7 +655,7 @@ def _generate_energy_report_html(result: dict, input_data: dict) -> str:
       <div class="card">
         <h3>Carbon Footprint</h3>
         <table>
-          <tr><td>Daily CO\u2082</td><td style="text-align:right">{cf.get('daily_co2_kg',0):,.1f} kg</td></tr>
+          <tr><td>Daily CO2</td><td style="text-align:right">{cf.get('daily_co2_kg',0):,.1f} kg</td></tr>
           <tr><td>Daily Limit</td><td style="text-align:right">{cf.get('daily_limit_kg_co2',18000):,.0f} kg</td></tr>
           <tr><td>Recycling Target</td><td style="text-align:right">{ec.get('recycling_target_pct',88)}%</td></tr>
         </table>
